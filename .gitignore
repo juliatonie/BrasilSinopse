@@ -1,0 +1,15 @@
+node_modules/
+.env
+*.log
+*.pyc
+__pycache__/
+data/processed/
+*.DS_Store
+venv/
+*/venv/
+**/venv/
+*.lib
+*.json
+
+#manter arquivos JSON 
+!data/*.json
