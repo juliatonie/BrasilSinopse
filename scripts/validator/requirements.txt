@@ -1,0 +1,5 @@
+openai
+sentence-transformers
+scikit-learn
+tqdm
+python-dotenv
