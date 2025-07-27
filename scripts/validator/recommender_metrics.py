@@ -3,25 +3,29 @@ import subprocess
 import json
 import pandas as pd
 import math
+import csv
 
 # === CONFIG ===
-CSV_INPUT = './inputs.csv'
-GENRES_FILE = '../../data/movies.csv'
+CSV_INPUT = '../../data/results/inputs.csv'
+GENRES_FILE = '../../data/processed/movies.csv'
 USER_INPUT_COL = 'input_user'
 ORIGINAL_ID_COL = 'id'
 TITLE_COL = 'title'
 RECOMMENDER = './run_recommender.js'
 TOP_K = 5
-OUTPUT_CSV = './metrics_summary.csv'
+OUTPUT_RESULTS = './results.csv'      # CSV final com métricas e top k
+OUTPUT_SUMMARY = './metrics_summary.json'
 
-# === Load movie genres ===
+# === Load movie genres and titles ===
 def load_movie_genres():
     df = pd.read_csv(GENRES_FILE)
     df['id'] = df['id'].astype(str).str.strip()
     df['genres'] = df['genres'].astype(str).apply(
         lambda x: [g.strip().lower() for g in x.split(',')] if x.strip() else []
     )
-    return {film_id: genres for film_id, genres in zip(df['id'], df['genres']) if genres}
+    genre_map = {film_id: genres for film_id, genres in zip(df['id'], df['genres']) if genres}
+    title_map = {film_id: title for film_id, title in zip(df['id'], df['title'])}
+    return genre_map, title_map
 
 # === Call Node.js recommender ===
 def get_recommendations(user_input):
@@ -97,7 +101,7 @@ def ndcg_score(recommendations, original_id):
 # === Main evaluation ===
 def process_all_inputs():
     df_input = pd.read_csv(CSV_INPUT, sep=",", quotechar='"', encoding="utf-8")
-    genre_map = load_movie_genres()
+    genre_map, title_map = load_movie_genres()
 
     total = 0
     precision_sum = 0.0
@@ -107,33 +111,73 @@ def process_all_inputs():
     binary_sum = 0.0
     prop_sum = 0.0
     genre_count = 0
+    total_results_without_genres = 0
 
-    for _, row in df_input.iterrows():
-        original_id = str(row[ORIGINAL_ID_COL]).strip()
-        user_input = str(row[USER_INPUT_COL]).strip()
+    with open(OUTPUT_RESULTS, 'w', newline='', encoding='utf-8-sig') as csvfile:
+        writer = csv.writer(csvfile)
+        writer.writerow([
+            'original_id', 'title', 'user_input',
+            'precision_at_k', 'recall_at_k', 'mrr', 'ndcg',
+            'binary_genre_similarity', 'proportional_genre_similarity',
+            'top_k_ids', 'top_k_titles'
+        ])
 
-        if not user_input or not original_id or user_input.lower() == 'nan':
-            continue
+        for _, row in df_input.iterrows():
+            original_id = str(row[ORIGINAL_ID_COL]).strip()
+            user_input = str(row[USER_INPUT_COL]).strip()
+            title = title_map.get(original_id, '')
 
-        recommendations = get_recommendations(user_input)
-        if not recommendations:
-            continue
+            if not user_input or not original_id or user_input.lower() == 'nan':
+                continue
 
-        input_genres = genre_map.get(original_id, [])
+            recommendations = get_recommendations(user_input)
+            if not recommendations:
+                continue
 
-        total += 1
-        precision_sum += precision_at_k(recommendations, original_id)
-        recall_sum += recall_at_k(recommendations, original_id)
-        mrr_sum += mrr_score(recommendations, original_id)
-        ndcg_sum += ndcg_score(recommendations, original_id)
+            input_genres = genre_map.get(original_id, [])
 
-        if input_genres:
-            bin_score = genre_binary_score(input_genres, recommendations[:TOP_K])
-            prop_score = genre_proportional_score(input_genres, recommendations[:TOP_K])
-            if bin_score is not None:
-                binary_sum += bin_score
-                prop_sum += prop_score
-                genre_count += 1
+            if not input_genres:
+                total_results_without_genres += 1
+
+            total += 1
+
+            precision = precision_at_k(recommendations, original_id)
+            recall = recall_at_k(recommendations, original_id)
+            mrr = mrr_score(recommendations, original_id)
+            ndcg = ndcg_score(recommendations, original_id)
+
+            bin_score = None
+            prop_score = None
+            if input_genres:
+                bin_score = genre_binary_score(input_genres, recommendations[:TOP_K])
+                prop_score = genre_proportional_score(input_genres, recommendations[:TOP_K])
+                if bin_score is not None:
+                    binary_sum += bin_score
+                    prop_sum += prop_score
+                    genre_count += 1
+
+            precision_sum += precision
+            recall_sum += recall
+            mrr_sum += mrr
+            ndcg_sum += ndcg
+
+            top_k_recs = recommendations[:TOP_K]
+            top_k_ids = ','.join(str(m.get('id', '')) for m in top_k_recs)
+            top_k_titles = ','.join(m.get('title', '').replace(',', '') for m in top_k_recs)
+
+            writer.writerow([
+                original_id,
+                title,
+                user_input,
+                f'{precision:.6f}',
+                f'{recall:.6f}',
+                f'{mrr:.6f}',
+                f'{ndcg:.6f}',
+                f'{bin_score:.6f}' if bin_score is not None else '',
+                f'{prop_score:.6f}' if prop_score is not None else '',
+                top_k_ids,
+                top_k_titles
+            ])
 
     if total == 0:
         print("No valid inputs processed.")
@@ -147,13 +191,15 @@ def process_all_inputs():
         'binary_genre_similarity': (binary_sum / genre_count) if genre_count > 0 else None,
         'proportional_genre_similarity': (prop_sum / genre_count) if genre_count > 0 else None,
         'total_evaluated_inputs': total,
-        'total_inputs_with_genres': genre_count
+        'total_inputs_with_genres': genre_count,
+        'total_results_without_genres': total_results_without_genres
     }
 
-    # Save summary CSV
-    df_summary = pd.DataFrame([metrics_summary])
-    df_summary.to_csv(OUTPUT_CSV, index=False, float_format='%.6f', encoding='utf-8-sig')
-    print(f"Summary metrics saved to {OUTPUT_CSV}")
+    with open(OUTPUT_SUMMARY, 'w', encoding='utf-8') as f:
+        json.dump(metrics_summary, f, ensure_ascii=False, indent=2)
+
+    print(f"Results saved to {OUTPUT_RESULTS}")
+    print(f"Summary saved to {OUTPUT_SUMMARY}")
 
 if __name__ == "__main__":
     process_all_inputs()

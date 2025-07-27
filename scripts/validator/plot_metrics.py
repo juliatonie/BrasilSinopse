@@ -8,7 +8,7 @@ sns.set(style='whitegrid')
 plt.rcParams.update({'font.size': 14, 'axes.titlesize': 18, 'axes.labelsize': 16})
 
 # Carrega dados
-df = pd.read_csv('evaluation_results.csv')
+df = pd.read_csv('../../data/results/results.csv')
 
 # Cria bins de 0.1
 bins = np.arange(0, 1.1, 0.1)

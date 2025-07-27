@@ -1,20 +1,23 @@
-module.exports = function cosineSimilarity(vecA, vecB, { normalized = true } = {}) {
+module.exports = function cosineSimilarity(vecA, vecB) {
   if (vecA.length !== vecB.length) {
     throw new Error("Vetores devem ter o mesmo comprimento");
   }
 
-  const EPSILON = 1e-10;
   let dot = 0;
-  
+  let normA = 0;
+  let normB = 0;
+
+  // Usa acesso direto para performance, funciona com Array e Float32Array
   for (let i = 0; i < vecA.length; i++) {
-    dot += vecA[i] * vecB[i];
+    const a = vecA[i];
+    const b = vecB[i];
+    dot += a * b;
+    normA += a * a;
+    normB += b * b;
   }
 
-  if (normalized) return dot;
+  const denom = Math.sqrt(normA) * Math.sqrt(normB);
+  if (denom === 0) return 0;
 
-  const magA = Math.hypot(...vecA);
-  const magB = Math.hypot(...vecB);
-  const magnitude = magA * magB;
-
-  return magnitude < EPSILON ? 0 : dot / magnitude;
+  return dot / denom;
 };

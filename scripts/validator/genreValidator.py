@@ -4,8 +4,8 @@ import json
 import pandas as pd
 
 # === CONFIGURAÇÕES ===
-CSV_INPUT = './inputs.csv'        # arquivo com input_user e id_original (troque title por id)
-GENRES_FILE = '../../data/movies.csv'      # arquivo auxiliar com id, title e genres
+CSV_INPUT = '../../data/results/inputs.csv'        # arquivo com input_user e id_original (troque title por id)
+GENRES_FILE = '../../data/processed/movies.csv'      # arquivo auxiliar com id, title e genres
 COLUNA_INPUT = 'input_user'
 COLUNA_ID_ORIGINAL = 'id'  # coluna com ID do filme original no CSV de input
 NOME_FILME = 'title'
