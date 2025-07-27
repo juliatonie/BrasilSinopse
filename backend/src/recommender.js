@@ -7,7 +7,7 @@ const DEBUG = false;
 const TMDB_BASE_URL = 'https://image.tmdb.org/t/p/w154';
 const EMBEDDING_API_URL = 'http://127.0.0.1:5000/embed';
 const EMBEDDING_TIMEOUT_MS = 5000;
-const MODEL_PATH = path.join(__dirname, '../../data/model.json');
+const MODEL_PATH = path.join(__dirname, '../../data/model/model.json');
 
 // Carrega o modelo uma vez (cache)
 let model;

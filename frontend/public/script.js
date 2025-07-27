@@ -3,7 +3,7 @@ document.getElementById('searchButton').addEventListener('click', async () => {
   const resultsDiv = document.getElementById('results');
   resultsDiv.innerHTML = '';
 
-  if (query.length < 3) {
+  if (query.length < 60) {
     resultsDiv.innerHTML = '<p>Por favor, digite uma descrição mais completa.</p>';
     return;
   }
@@ -38,10 +38,9 @@ document.getElementById('searchButton').addEventListener('click', async () => {
         <div class="result-title"><strong>${filme.title}</strong></div>
         <div class="result-overview">${filme.overview}</div>
         <div><strong>Gêneros:</strong> ${Array.isArray(filme.genres) ? filme.genres.join(', ') : 'Não informado'}</div>
-        <div><strong>Popularidade:</strong> ${filme.popularity || 'Não informado'}</div>
-        <div><strong>Classificação:</strong> ${filme.rating || 'Não informado'}</div>
-        <div><strong>Similaridade:</strong> ${filme.similarity}</div>
+        
       `;
+      //<div><strong>Popularidade:</strong> ${filme.popularity || 'Não informado'}</div>
       grid.appendChild(item);
     });
 
@@ -51,4 +50,24 @@ document.getElementById('searchButton').addEventListener('click', async () => {
     resultsDiv.innerHTML = '<p>Erro ao conectar com o servidor.</p>';
     console.error(error);
   }
+});
+
+ window.addEventListener('scroll', () => {
+      const header = document.getElementById('header');
+      if (window.scrollY > 30) {
+        header.classList.add('scrolled');
+      } else {
+        header.classList.remove('scrolled');
+      }
+    });
+
+document.addEventListener('DOMContentLoaded', () => {
+  const results = document.getElementById('results');
+
+  results.addEventListener('click', (event) => {
+    // Se o alvo do clique tem a classe .result-overview
+    if (event.target.classList.contains('result-overview')) {
+      event.target.classList.toggle('expanded');
+    }
+  });
 });
