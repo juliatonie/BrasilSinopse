@@ -9,7 +9,7 @@ from sentence_transformers import SentenceTransformer
 from hashlib import md5
 
 # === CONFIGURAÇÕES ===
-CSV_FILE = 'bref/data/movies.csv'
+CSV_FILE = './data/movies.csv'
 OUTPUT_FILE = './model.json'
 MODEL_NAME = 'sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2'
 

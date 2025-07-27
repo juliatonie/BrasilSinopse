@@ -9,7 +9,7 @@ const path = require('path');         // Módulo de caminho para lidar com camin
 const API_KEY = "9e442d7d9aaa8672cd8fc6d1e798a77f"//process.env.TMDB_API_KEY;
 const BASE_URL = 'https://api.themoviedb.org/3';
 const TOTAL_PAGES = 500
-; // Aproximadamente 2000 filmes → 100 páginas × 20 filmes por página
+; 
 
 // Define o caminho do arquivo de saída para salvar os dados finais dos filmes
 const OUTPUT_PATH = path.join(__dirname, '../../data/movies.json');
@@ -27,7 +27,7 @@ function getSavedMovieIds() {
     const movies = JSON.parse(jsonText ? jsonText : '[]');
     return new Set(movies.map(movie => movie.id));
   } catch (err) {
-    console.error('⚠️ Erro ao ler IDs já salvos:', err.message);
+    console.error('Erro ao ler IDs já salvos:', err.message);
     return new Set();
   }
 }
@@ -89,7 +89,7 @@ async function collectMovies() {
 
     for (const movie of movies) {
       if (savedIds.has(movie.id)) {
-        console.log(`⏩ Filme ${movie.id} já foi salvo. Pulando...`);
+        console.log(`Filme ${movie.id} já foi salvo. Pulando...`);
         continue;
       }
 
@@ -104,14 +104,14 @@ async function collectMovies() {
 
         await new Promise(r => setTimeout(r, 250));
       } catch (err) {
-        console.error(`❌ Erro ao buscar o filme ${movie.id}:`, err.message);
+        console.error(`Erro ao buscar o filme ${movie.id}:`, err.message);
       }
     }
   }
 
   // Finaliza o JSON
   fs.appendFileSync(OUTPUT_PATH, '\n]', 'utf-8');
-  console.log(`✅ Concluído! Filmes salvos em ${OUTPUT_PATH}`);
+  console.log(`Filmes salvos em ${OUTPUT_PATH}`);
 }
 
 collectMovies();

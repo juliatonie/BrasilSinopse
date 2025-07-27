@@ -1,0 +1,2 @@
+﻿precision_at_k,recall_at_k,mrr,ndcg,binary_genre_similarity,proportional_genre_similarity,total_evaluated_inputs,total_inputs_with_genres
+0.652496,0.652496,0.571041,0.591416,0.659407,0.549300,3105,3104

@@ -1,6 +1,6 @@
 const express = require('express');
 const cors = require('cors');
-const recommend = require('./src/recommender'); // Novo módulo assíncrono
+const recommend = require('./src/recommender'); 
 
 const app = express();
 app.use(cors());
@@ -14,7 +14,7 @@ app.post('/api/recommender', async (req, res) => {
   }
 
   try {
-    const results = await recommend(query, 5); // agora é assíncrono
+    const results = await recommend(query, 5); 
     res.json(results);
   } catch (error) {
     console.error('Erro ao recomendar:', error.message);
