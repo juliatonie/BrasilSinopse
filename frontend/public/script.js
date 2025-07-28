@@ -4,7 +4,20 @@ document.getElementById('searchButton').addEventListener('click', async () => {
   resultsDiv.innerHTML = '';
 
   if (query.length < 60) {
-    resultsDiv.innerHTML = '<p>Por favor, digite uma descrição mais completa.</p>';
+    resultsDiv.innerHTML = `
+      <div style="
+        background-color: #ffa44e;
+        color: #000000ff;
+        padding: 10px;
+        border-radius: 12px;
+        margin-top: 10px;
+        font-family: Arial, sans-serif;
+        text-align: center;
+        box-shadow: 0 4px 8px hsla(27, 100%, 49%, 0.10);
+      ">
+        <strong>Atenção:</strong> Por favor, insira uma descrição com no mínimo 60 caracteres.
+      </div>
+    `;
     return;
   }
 
@@ -22,15 +35,50 @@ document.getElementById('searchButton').addEventListener('click', async () => {
 
     const filmes = await response.json();
 
-    if (!Array.isArray(filmes) || filmes.length === 0) {
-      resultsDiv.innerHTML = '<p>Nenhum filme relevante encontrado.</p>';
+    const LIMIAR_SIMILARIDADE = 0.4;
+
+
+    const filmesFiltrados = Array.isArray(filmes)
+      ? filmes.filter(f => f.similarity >= LIMIAR_SIMILARIDADE)
+      : [];
+
+    if (filmesFiltrados.length === 0) {
+      resultsDiv.innerHTML = `
+        <div style="
+          background-color: #ffa44e;
+          color: #000000ff;
+          padding: 10px;
+          border-radius: 12px;
+          margin-top: 10px;
+          font-family: Arial, sans-serif;
+          text-align: center;
+          box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+        ">
+          Nenhum filme relevante encontrado. Por favor, reformule sua descrição.
+        </div>
+      `;
       return;
+    }
+
+    
+
+    function renderStars(rating) {
+      const maxStars = 5;
+      const filledStars = Math.round(rating / 2); // converte 0-10 para 0-5
+      let stars = '';
+
+      for (let i = 0; i < maxStars; i++) {
+        stars += i < filledStars ? '⭐' : '☆';
+      }
+
+      return stars;
     }
 
     const grid = document.createElement('div');
     grid.className = 'result-grid';
 
-    filmes.forEach(filme => {
+    filmesFiltrados.forEach(filme => {
+      const ratingNum = parseFloat(filme.rating) || 0;
       const item = document.createElement('div');
       item.className = 'result-item';
       item.innerHTML = `
@@ -38,12 +86,12 @@ document.getElementById('searchButton').addEventListener('click', async () => {
         <div class="result-title"><strong>${filme.title}</strong></div>
         <div class="result-overview">${filme.overview}</div>
         <div><strong>Gêneros:</strong> ${Array.isArray(filme.genres) ? filme.genres.join(', ') : 'Não informado'}</div>
-        
+        <div><strong>Popularidade:</strong> ${filme.popularity}</div>
+        <div><strong>Avaliação TMDB:</strong> ${renderStars(ratingNum)} (${ratingNum.toFixed(1)}/10)</div>
       `;
-      //<div><strong>Popularidade:</strong> ${filme.popularity || 'Não informado'}</div>
       grid.appendChild(item);
     });
-
+    //<div><strong>Similaridade:</strong> ${(filme.similarity * 100).toFixed(2)}%</div>
     resultsDiv.appendChild(grid);
 
   } catch (error) {
@@ -52,20 +100,21 @@ document.getElementById('searchButton').addEventListener('click', async () => {
   }
 });
 
- window.addEventListener('scroll', () => {
-      const header = document.getElementById('header');
-      if (window.scrollY > 30) {
-        header.classList.add('scrolled');
-      } else {
-        header.classList.remove('scrolled');
-      }
-    });
+// 🔹 Efeito do header ao rolar
+window.addEventListener('scroll', () => {
+  const header = document.getElementById('header');
+  if (window.scrollY > 30) {
+    header.classList.add('scrolled');
+  } else {
+    header.classList.remove('scrolled');
+  }
+});
 
+// 🔹 Expansão da descrição
 document.addEventListener('DOMContentLoaded', () => {
   const results = document.getElementById('results');
 
   results.addEventListener('click', (event) => {
-    // Se o alvo do clique tem a classe .result-overview
     if (event.target.classList.contains('result-overview')) {
       event.target.classList.toggle('expanded');
     }

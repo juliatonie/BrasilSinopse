@@ -9,7 +9,7 @@ const TMDB_BASE_URL = 'https://image.tmdb.org/t/p/w154';
 const EMBEDDING_API_URL = 'http://127.0.0.1:5000/embed';
 const EMBEDDING_TIMEOUT_MS = 5000;
 const MODEL_PATH = path.join(__dirname, '../../data/model/model.json');
-
+const SIMILARITY_THRESHOLD = 0.3;
 const WEIGHT_MINILM = 0.7;
 const WEIGHT_TFIDF = 0.3;
 
@@ -24,6 +24,7 @@ try {
 const { movies } = model;
 // Converter embeddings para Float32Array para performance
 const embeddings = model.embeddings.map(e => Float32Array.from(e));
+
 
 function validateQuery(query) {
   if (!query || typeof query !== 'string' || query.trim().length < 2) {
@@ -67,8 +68,17 @@ function processResults(queryVec, queryText, queryKeywords = '', queryGenres = '
     const simTfidf = tfidfScores[i];
 
     const similarity = (WEIGHT_MINILM * simMiniLM) + (WEIGHT_TFIDF * simTfidf);
+   /* console.log({
+    titulo: movies[i].title,
+    simMiniLM: simMiniLM.toFixed(4),
+    simTfidf: simTfidf.toFixed(4),
+    final: similarity.toFixed(4)
+    });*/
+
     results.push({ index: i, similarity });
   }
+
+
 
   return results
     .sort((a, b) => b.similarity - a.similarity)
@@ -81,6 +91,8 @@ function formatMovie(movie, similarity) {
       ? str.split(',').map(s => s.trim()).filter(Boolean)
       : [];
 
+
+
   return {
     id: movie.id,
     title: movie.title,
@@ -92,6 +104,7 @@ function formatMovie(movie, similarity) {
     popularity: movie.popularity,
     rating: movie.rating,
   };
+  
 }
 
 async function recommender(query, n = 5, keywords = '', genres = '') {

@@ -12,7 +12,7 @@ app.post('/api/recommender', async (req, res) => {
   try {
     const results = await recommend(query, 5); 
     res.json(results);
-   // console.log(results);
+   console.log(results);
   } catch (error) {
     console.error('Erro ao recomendar:', error.message);
     res.status(500).json({ error: 'Erro ao processar recomendação.' });
